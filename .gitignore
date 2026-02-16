@@ -45,9 +45,3 @@ Thumbs.db
 .coverage
 htmlcov/
 .tox/
-
-# Distribution / packaging
-.Python
-build/
-dist/
-*.egg-info/
