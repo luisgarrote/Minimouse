@@ -284,11 +284,14 @@ def make_path_controller(env, planner: str = "astar") -> Tuple[Callable[[Dict], 
             wps = plan_waypoints(env, (x, y, th), goal_cell, planner=state["planner"])
             if wps is None:
                 state["waypoints"] = None
+                env.waypoints = None
                 return 0.0, 0.0
 
             # smooth once and store
             wps = bundle_adjust_smooth(env, wps, iters=25, alpha=0.4)
             state["waypoints"] = wps
+            env.waypoints = wps
+
 
         vl, vr, new_idx = follow_waypoints(env, (x, y, th), state["waypoints"], int(state["wp_idx"]))
         state["wp_idx"] = int(new_idx)
