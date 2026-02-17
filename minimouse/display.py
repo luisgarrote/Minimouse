@@ -479,7 +479,7 @@ class Display:
 
     def _install_tick_loop(self):
         interval_ms = max(1, int(1000.0 / max(1.0, self.fps)))
-        print(interval_ms)
+        #print(interval_ms)
         display(Javascript(r"""
 (function(){
   if (window._mm_tick_loop_installed) return;
