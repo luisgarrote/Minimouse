@@ -241,6 +241,7 @@ class Display:
 
         if self.control["mode"] == "auto":
             ctrl = self.callbacks.get("user_controller")
+            self.env.waypoints= None  
             if not callable(ctrl):
                 # graceful fallback
                 vl, vr = self.control["vl"], self.control["vr"]
@@ -254,6 +255,7 @@ class Display:
                 self.callbacks["user_controller"]=bug_controller
                 self.callbacks["reset_hook"]=reset_bug
                 vl, vr = self.control["vl"], self.control["vr"]
+                self.env.waypoints= None  
             else:
                 vl, vr = ctrl(obs)
         elif self.control["mode"] == "autoAstar":
@@ -263,7 +265,7 @@ class Display:
                 path_controller, reset_path, state = make_path_controller(env, planner="astar")     # or "rrt" / "rrtstar"
                 self.callbacks["user_controller"]=path_controller
                 self.callbacks["reset_hook"]=reset_path
-                self.env.Path= state["waypoints"]  
+                self.env.waypoints= state["waypoints"]  
                 
                 vl, vr = self.control["vl"], self.control["vr"]
             else:
@@ -275,13 +277,15 @@ class Display:
                 path_controller, reset_path, state = make_path_controller(env, planner="rrtstar")     # or "rrt" / "rrtstar"
                 self.callbacks["user_controller"]=path_controller
                 self.callbacks["reset_hook"]=reset_path
-                self.env.Path= state["waypoints"]  
+                self.env.waypoints= state["waypoints"]  
                 vl, vr = self.control["vl"], self.control["vr"]
             else:
                 vl, vr = ctrl(obs)
         
         else:
             # manual: buttons + optional keyboard override
+            self.env.waypoints= None  
+
             vl, vr = self.control["vl"], self.control["vr"]
             if self.window_keys:
                 vl, vr = self._keys_to_action(self.window_keys, vl, vr)
