@@ -235,6 +235,7 @@ class Display:
 
     def step_once(self):
         if not self.control["running"]:
+            self.draw()
             return
 
         obs = self.env._get_obs()
