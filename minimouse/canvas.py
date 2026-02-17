@@ -187,8 +187,16 @@ class CanvasRenderer:
             if show_trajectory and len(e.trajectory) >= 2:
 
                 pts = [self.world_to_px(x, y) for (x, y) in e.trajectory]
+                seen_px = set()
                 for p in pts[1:]:
-                    draw_goal_glow(p[0],p[1])
+                    px=p[0]
+                    py=p[1]
+                    key = (px, py)
+                    if key in seen_px:
+                        continue
+                    draw_goal_glow(px,py)
+                    seen_px.add(key)
+
                 
                 c.stroke_style = "green"
                 c.line_width = 2
