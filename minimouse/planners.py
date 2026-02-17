@@ -336,7 +336,7 @@ def rrtstar_plan_world(
     goal_xy: Point,
     step_len: Optional[float] = None,
     goal_sample_rate: float = 0.15,
-    max_iters: int = 40000,
+    max_iters: int = 4000,
     neighbor_radius: Optional[float] = None,
 ) -> Optional[List[Point]]:
     """
