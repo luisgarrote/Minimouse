@@ -13,10 +13,10 @@ import ipywidgets as widgets
 from IPython.display import display, Javascript
 from ipycanvas import Canvas
 from google.colab import output
-from env import MicromouseEnv
-from canvas import CanvasRenderer
-from maze import generate_perfect_maze
-from controllers import make_bug2_controller, make_path_controller
+from .env import MicromouseEnv
+from .canvas import CanvasRenderer
+from .maze import generate_perfect_maze
+from .controllers import make_bug2_controller, make_path_controller
 
 class Display:
     """
