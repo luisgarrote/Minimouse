@@ -25,7 +25,7 @@ from typing import Callable, Dict, List, Optional, Tuple
 
 import numpy as np
 
-from planners import plan_waypoints, bundle_adjust_smooth
+from .planners import plan_waypoints, bundle_adjust_smooth
 
 
 Point = Tuple[float, float]
