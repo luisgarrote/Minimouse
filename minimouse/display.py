@@ -262,7 +262,7 @@ class Display:
             ctrl = self.callbacks.get("user_controller")
             if not callable(ctrl):
                 # graceful fallback
-                path_controller, reset_path, state = make_path_controller(env, planner="astar")     # or "rrt" / "rrtstar"
+                path_controller, reset_path, state = make_path_controller(self.env, planner="astar")     # or "rrt" / "rrtstar"
                 self.callbacks["user_controller"]=path_controller
                 self.callbacks["reset_hook"]=reset_path
                 self.env.waypoints= state["waypoints"]  
@@ -274,7 +274,7 @@ class Display:
             ctrl = self.callbacks.get("user_controller")
             if not callable(ctrl):
                 # graceful fallback
-                path_controller, reset_path, state = make_path_controller(env, planner="rrtstar")     # or "rrt" / "rrtstar"
+                path_controller, reset_path, state = make_path_controller(self.env, planner="rrtstar")     # or "rrt" / "rrtstar"
                 self.callbacks["user_controller"]=path_controller
                 self.callbacks["reset_hook"]=reset_path
                 self.env.waypoints= state["waypoints"]  
@@ -405,7 +405,7 @@ class Display:
         self.control["mode"] = change["new"]
         self.callbacks["user_controller"]=None
         self.callbacks["reset_hook"]=None
-        self.env.Path=None
+        self.env.waypoints=None
         self.set_status(f"Mode: {self.control['mode']}")
 
     def _rays_changed(self, change):
