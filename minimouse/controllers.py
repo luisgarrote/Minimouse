@@ -25,7 +25,7 @@ from typing import Callable, Dict, List, Optional, Tuple
 
 import numpy as np
 
-from planners_and_smoothing import plan_waypoints, bundle_adjust_smooth
+from planners import plan_waypoints, bundle_adjust_smooth
 
 
 Point = Tuple[float, float]
@@ -294,4 +294,7 @@ def make_path_controller(env, planner: str = "astar") -> Tuple[Callable[[Dict], 
         state["wp_idx"] = int(new_idx)
         return float(vl), float(vr)
 
-    return controller, reset
+   
+    s = dict(state)
+    s["waypoints"] = None if state["waypoints"] is None else list(state["waypoints"])
+    return controller, reset, s
