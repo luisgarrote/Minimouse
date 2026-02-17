@@ -32,6 +32,7 @@ class MicromouseEnv:
         self.goal_cell = goal_cell
 
         self.trajectory = []
+        self.waypoints=None
         self.last_action = (0.0, 0.0)
 
         self.reset()
