@@ -1,6 +1,4 @@
 """
-planners_and_smoothing.py
-
 Student-friendly path planners and path "bundle adjustment" smoothing for MicromouseEnv.
 
 What this file provides
