@@ -185,15 +185,24 @@ class CanvasRenderer:
             # TRAJECTORY
             # -------------------------------------------------
             if show_trajectory and len(e.trajectory) >= 2:
+
+                pts = [self.world_to_px(x, y) for (x, y) in e.trajectory]
+                for p in pts[1:]:
+                    draw_goal_glow(p[0],p[1])
+                
                 c.stroke_style = "green"
                 c.line_width = 2
                 c.set_line_dash([])
-                pts = [self.world_to_px(x, y) for (x, y) in e.trajectory]
                 c.begin_path()
                 c.move_to(*pts[0])
                 for p in pts[1:]:
                     c.line_to(*p)
                 c.stroke()
+
+            
+
+
+            
 
             #print(e.waypoints)
             if e.waypoints and len(e.waypoints) >= 2:
