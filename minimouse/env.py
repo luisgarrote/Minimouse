@@ -1,200 +1,118 @@
-"""
-MicromouseEnv - A reinforcement learning environment for micromouse simulation.
-
-This module provides the main environment class for simulating a micromouse
-navigating through a maze with laser range sensors.
-"""
-
-from typing import Tuple, List, Any, Optional
-import numpy as np
-
-
 class MicromouseEnv:
-    """
-    A simulation environment for a micromouse robot navigating a maze.
-    
-    The environment simulates a small robot (micromouse) equipped with laser
-    range sensors navigating through a maze. The robot can sense walls using
-    ray-casting and must navigate from a start position to a goal position.
-    
-    Attributes:
-        occ: Occupancy grid representing the maze (1 = wall, 0 = free space)
-        start_cell: Starting cell coordinates (row, col)
-        goal_cell: Goal cell coordinates (row, col)
-        cell_size: Size of each cell in meters (default: 1.0)
-        n_rays: Number of laser rays for sensing (default: 12)
-    
-    Example:
-        >>> import numpy as np
-        >>> maze = np.array([[0, 0, 0], [0, 1, 0], [0, 0, 0]])
-        >>> env = MicromouseEnv(maze, start_cell=(0, 0), goal_cell=(2, 2))
-        >>> obs = env.reset()
-        >>> obs, reward, done, info = env.step(action=0)
-    """
-    
-    def __init__(
-        self,
-        occ: np.ndarray,
-        start_cell: Tuple[int, int],
-        goal_cell: Tuple[int, int],
-        cell_size: float = 1.0,
-        n_rays: int = 12
-    ):
-        """
-        Initialize the Micromouse environment.
-        
-        Args:
-            occ: A 2D numpy array representing the occupancy grid of the maze.
-                 Values should be 0 for free space and 1 for walls.
-            start_cell: A tuple (row, col) indicating the starting cell position
-                       in the grid.
-            goal_cell: A tuple (row, col) indicating the goal cell position
-                      in the grid.
-            cell_size: The size of each cell in world units (meters). 
-                      Default is 1.0.
-            n_rays: The number of laser rays used for sensing obstacles.
-                   Rays are distributed evenly around the robot. Default is 12.
-        
-        Raises:
-            ValueError: If start_cell or goal_cell are outside the maze bounds.
-            ValueError: If cell_size is not positive.
-            ValueError: If n_rays is less than 1.
-        """
-        raise NotImplementedError("Implementation will be added later")
-    
-    def _cell_center_world(self, cx: int, cy: int) -> Tuple[float, float]:
-        """
-        Convert cell coordinates to world coordinates (center of cell).
-        
-        Args:
-            cx: Cell column index
-            cy: Cell row index
-        
-        Returns:
-            A tuple (x, y) representing the world coordinates of the cell center.
-        """
-        raise NotImplementedError("Implementation will be added later")
-    
-    def reset(self) -> np.ndarray:
-        """
-        Reset the environment to the initial state.
-        
-        This method resets the robot's position to the start cell, clears any
-        accumulated state, and returns the initial observation.
-        
-        Returns:
-            Initial observation array containing sensor readings and other
-            relevant state information.
-        """
-        raise NotImplementedError("Implementation will be added later")
-    
-    def step(self, action: Any) -> Tuple[np.ndarray, float, bool, dict]:
-        """
-        Execute one time step within the environment.
-        
-        Args:
-            action: The action to take. The format depends on the action space
-                   (e.g., discrete action index or continuous control values).
-        
-        Returns:
-            A tuple containing:
-            - observation (np.ndarray): The new observation after taking the action
-            - reward (float): The reward received for this step
-            - done (bool): Whether the episode has ended (reached goal or failed)
-            - info (dict): Additional diagnostic information
-        """
-        raise NotImplementedError("Implementation will be added later")
-    
-    def _get_obs(self) -> np.ndarray:
-        """
-        Get the current observation from the environment.
-        
-        The observation typically includes laser scan readings and possibly
-        other robot state information like position and orientation.
-        
-        Returns:
-            Current observation as a numpy array.
-        """
-        raise NotImplementedError("Implementation will be added later")
-    
-    def _laser_scan(self) -> np.ndarray:
-        """
-        Perform a laser scan from the robot's current position.
-        
-        Casts multiple rays around the robot to detect obstacles and measure
-        distances to walls.
-        
-        Returns:
-            Array of distances measured by each laser ray. The number of
-            elements equals n_rays.
-        """
-        raise NotImplementedError("Implementation will be added later")
-    
-    def _ray_cast(self, ang: float) -> float:
-        """
-        Cast a single ray at a given angle and return the distance to obstacle.
-        
-        Args:
-            ang: Angle in radians at which to cast the ray, relative to the
-                robot's current orientation.
-        
-        Returns:
-            Distance to the nearest obstacle in the direction of the ray.
-            Returns a maximum range value if no obstacle is detected.
-        """
-        raise NotImplementedError("Implementation will be added later")
-    
-    def _is_wall(self, x: float, y: float) -> bool:
-        """
-        Check if a given world position is inside a wall.
-        
-        Args:
-            x: X-coordinate in world space
-            y: Y-coordinate in world space
-        
-        Returns:
-            True if the position is inside a wall, False otherwise.
-        """
-        raise NotImplementedError("Implementation will be added later")
-    
-    def _handle_collision(
-        self,
-        x: float,
-        y: float,
-        nx: float,
-        ny: float
-    ) -> Tuple[float, float]:
-        """
-        Handle collision detection and response.
-        
-        Checks if moving from (x, y) to (nx, ny) would result in a collision
-        and returns the corrected position if needed.
-        
-        Args:
-            x: Current X-coordinate in world space
-            y: Current Y-coordinate in world space
-            nx: Proposed new X-coordinate in world space
-            ny: Proposed new Y-coordinate in world space
-        
-        Returns:
-            A tuple (final_x, final_y) with the collision-corrected position.
-            If no collision, returns (nx, ny). If collision, returns a position
-            that prevents penetration into walls.
-        """
-        raise NotImplementedError("Implementation will be added later")
-    
-    def predict_lookahead(self, steps: int = 18) -> Any:
-        """
-        Predict future states by looking ahead a certain number of steps.
-        
-        This method can be used for planning or visualization purposes to
-        predict where the robot might be after taking a sequence of actions.
-        
-        Args:
-            steps: Number of steps to look ahead. Default is 18.
-        
-        Returns:
-            Predicted future state information. The exact format depends on
-            the implementation (could be positions, observations, etc.).
-        """
-        raise NotImplementedError("Implementation will be added later")
+    def __init__(self, occ, start_cell, goal_cell, cell_size=1.0, n_rays=12):
+        self.occ = np.array(occ, dtype=np.uint8)
+        self.cell_size = float(cell_size)
+        self.n_rays = int(n_rays)
+
+        self.H, self.W = self.occ.shape
+
+        # robot params
+        self.radius = 0.18 * self.cell_size
+        self.wheel_base = 0.35 * self.cell_size
+        self.dt = 0.05
+
+        # laser params
+        self.max_range = 8.0 * self.cell_size
+
+        self.start_cell = start_cell
+        self.goal_cell = goal_cell
+
+        self.trajectory = []
+        self.last_action = (0.0, 0.0)
+
+        self.reset()
+
+    def _cell_center_world(self, cx, cy):
+        # cell centers correspond to occ coords (2*cx+1, 2*cy+1)
+        ox = (2*cx + 1) * self.cell_size + 0.5*self.cell_size
+        oy = (2*cy + 1) * self.cell_size + 0.5*self.cell_size
+        return ox, oy
+
+    def reset(self):
+        sx, sy = self.start_cell
+        self.x, self.y = self._cell_center_world(sx, sy)
+        self.theta = 0.0
+        self.last_action = (0.0, 0.0)
+        self.trajectory = [(self.x, self.y)]
+        return self._get_obs()
+
+    def step(self, action):
+        vl, vr = float(action[0]), float(action[1])
+        self.last_action = (vl, vr)
+
+        v = 0.5 * (vr + vl)
+        w = (vr - vl) / self.wheel_base
+
+        nx = self.x + v * math.cos(self.theta) * self.dt
+        ny = self.y + v * math.sin(self.theta) * self.dt
+        ntheta = self.theta + w * self.dt
+
+        nx, ny = self._handle_collision(self.x, self.y, nx, ny)
+
+        self.x, self.y, self.theta = nx, ny, ntheta
+        self.trajectory.append((self.x, self.y))
+
+        obs = self._get_obs()
+
+        gx, gy = self._cell_center_world(*self.goal_cell)
+        done = ((self.x-gx)**2 + (self.y-gy)**2) <= (0.45*self.cell_size)**2
+        reward = 1.0 if done else 0.0
+        info = {"done_reason": "goal" if done else None}
+        return obs, reward, done, info
+
+    def _get_obs(self):
+        return {
+            "pose": np.array([self.x, self.y, self.theta], dtype=np.float32),
+            "laser": self._laser_scan().astype(np.float32),
+            "goal_cell": np.array(self.goal_cell, dtype=np.int32),
+        }
+
+    # ---------- Laser ----------
+    def _laser_scan(self):
+        angles = np.linspace(-math.pi/2, math.pi/2, self.n_rays)
+        dists = np.empty(self.n_rays, dtype=np.float32)
+        for i, a in enumerate(angles):
+            dists[i] = self._ray_cast(self.theta + a)
+        return dists
+
+    def _ray_cast(self, ang):
+        step = 0.05 * self.cell_size
+        for r in np.arange(0.0, self.max_range + 1e-9, step):
+            px = self.x + r * math.cos(ang)
+            py = self.y + r * math.sin(ang)
+            if self._is_wall(px, py):
+                return r
+        return self.max_range
+
+    # ---------- Collision (with sliding) ----------
+    def _is_wall(self, x, y):
+        ix = int(x / self.cell_size)
+        iy = int(y / self.cell_size)
+        if ix < 0 or iy < 0 or ix >= self.W or iy >= self.H:
+            return True
+        return self.occ[iy, ix] == 1
+
+    def _handle_collision(self, x, y, nx, ny):
+        if not self._is_wall(nx, ny):
+            return nx, ny
+        if not self._is_wall(nx, y):
+            return nx, y
+        if not self._is_wall(x, ny):
+            return x, ny
+        return x, y
+
+    # ---------- Lookahead ----------
+    def predict_lookahead(self, steps=18):
+        vl, vr = self.last_action
+        x, y, th = self.x, self.y, self.theta
+        pts = [(x, y)]
+        for _ in range(int(steps)):
+            v = 0.5 * (vr + vl)
+            w = (vr - vl) / self.wheel_base
+            nx = x + v * math.cos(th) * self.dt
+            ny = y + v * math.sin(th) * self.dt
+            nth = th + w * self.dt
+            nx, ny = self._handle_collision(x, y, nx, ny)
+            x, y, th = nx, ny, nth
+            pts.append((x, y))
+        return pts
