@@ -266,6 +266,7 @@ class Display:
                 path_controller, reset_path, state = make_path_controller(self.env, planner="astar")     # or "rrt" / "rrtstar"
                 self.callbacks["user_controller"]=path_controller
                 self.callbacks["reset_hook"]=reset_path
+                print(state)
                 self.env.waypoints= state["waypoints"]  
                 
                 vl, vr = self.control["vl"], self.control["vr"]
@@ -278,6 +279,7 @@ class Display:
                 path_controller, reset_path, state = make_path_controller(self.env, planner="rrtstar")     # or "rrt" / "rrtstar"
                 self.callbacks["user_controller"]=path_controller
                 self.callbacks["reset_hook"]=reset_path
+                print(state)
                 self.env.waypoints= state["waypoints"]  
                 vl, vr = self.control["vl"], self.control["vr"]
             else:
