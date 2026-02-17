@@ -16,6 +16,7 @@ from google.colab import output
 from env import MicromouseEnv
 from canvas import CanvasRenderer
 from maze import generate_perfect_maze
+from controllers import make_bug2_controller, make_path_controller
 
 class Display:
     """
@@ -108,6 +109,11 @@ class Display:
         self.control["vl"] = 0.0
         self.control["vr"] = 0.0
 
+
+    def reset_controler(self):
+        pass
+        
+
     def _safe_reset_hook(self):
         cb = self.callbacks.get("reset_hook")
         if callable(cb):
@@ -115,7 +121,7 @@ class Display:
             return
         # backwards-compat: if user didn’t pass reset_hook, try reset_bug2 if it exists
         try:
-            reset_bug2()
+            reset_controler()
         except Exception:
             pass
 
@@ -147,7 +153,7 @@ class Display:
             value=self.default_n_rays, min=3, max=41, step=1, description="Rays:"
         )
         self.mode_dd = widgets.Dropdown(
-            options=[("Manual", "manual"), ("Auto (user_controller)", "auto")],
+            options=[("Manual", "manual"), ("Auto (user_controller)", "auto"),("Auto (BUG2)", "autobug2"), ("Auto (A*)", "autoAstar"), ("Auto (RRT*)", "autoRRTstar")],
             value="manual",
             description="Mode:",
         )
@@ -239,6 +245,40 @@ class Display:
                 vl, vr = self.control["vl"], self.control["vr"]
             else:
                 vl, vr = ctrl(obs)
+        elif self.control["mode"] == "autobug2":
+            ctrl = self.callbacks.get("user_controller")
+            if not callable(ctrl):
+                # graceful fallback
+                bug_controller, reset_bug = make_bug2_controller(self.env)
+                self.callbacks["user_controller"]=bug_controller
+                self.callbacks["reset_hook"]=reset_bug
+                vl, vr = self.control["vl"], self.control["vr"]
+            else:
+                vl, vr = ctrl(obs)
+        elif self.control["mode"] == "autoAstar":
+            ctrl = self.callbacks.get("user_controller")
+            if not callable(ctrl):
+                # graceful fallback
+                path_controller, reset_path, state = make_path_controller(env, planner="astar")     # or "rrt" / "rrtstar"
+                self.callbacks["user_controller"]=path_controller
+                self.callbacks["reset_hook"]=reset_path
+                self.env.Path= state["waypoints"]  
+                
+                vl, vr = self.control["vl"], self.control["vr"]
+            else:
+                vl, vr = ctrl(obs)
+        elif self.control["mode"] == "autoRRTstar":
+            ctrl = self.callbacks.get("user_controller")
+            if not callable(ctrl):
+                # graceful fallback
+                path_controller, reset_path, state = make_path_controller(env, planner="rrtstar")     # or "rrt" / "rrtstar"
+                self.callbacks["user_controller"]=path_controller
+                self.callbacks["reset_hook"]=reset_path
+                self.env.Path= state["waypoints"]  
+                vl, vr = self.control["vl"], self.control["vr"]
+            else:
+                vl, vr = ctrl(obs)
+        
         else:
             # manual: buttons + optional keyboard override
             vl, vr = self.control["vl"], self.control["vr"]
@@ -358,6 +398,9 @@ class Display:
 
     def _mode_changed(self, change):
         self.control["mode"] = change["new"]
+        self.callbacks["user_controller"]=None
+        self.callbacks["reset_hook"]=None
+        self.env.Path=None
         self.set_status(f"Mode: {self.control['mode']}")
 
     def _rays_changed(self, change):
