@@ -195,7 +195,7 @@ class CanvasRenderer:
                     c.line_to(*p)
                 c.stroke()
 
-            
+            print(e.waypoints)
             if e.waypoints and len(e.waypoints) >= 2:
                 c.stroke_style = "#00FFFF"
                 c.line_width = 2
