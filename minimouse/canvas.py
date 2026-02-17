@@ -189,14 +189,14 @@ class CanvasRenderer:
                 pts = [self.world_to_px(x, y) for (x, y) in e.trajectory]
                 visited = set()
                 for (x, y) in e.trajectory:
-                    cx = int(x / env.cell_size)
-                    cy = int(y / env.cell_size)
+                    cx = int(x / e.cell_size)
+                    cy = int(y / e.cell_size)
                     if (cx, cy) in visited:
                         continue
                     visited.add((cx, cy))
                 
-                    wx = (cx + 0.5) * env.cell_size
-                    wy = (cy + 0.5) * env.cell_size
+                    wx = (cx + 0.5) * e.cell_size
+                    wy = (cy + 0.5) * e.cell_size
                     px, py = self.world_to_px(wx, wy)
                     draw_goal_glow(px, py)
 
