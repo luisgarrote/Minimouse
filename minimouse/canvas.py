@@ -195,6 +195,17 @@ class CanvasRenderer:
                     c.line_to(*p)
                 c.stroke()
 
+            
+            if e.waypoints and len(e.waypoints) >= 2:
+                c.stroke_style = "#00FFFF"
+                c.line_width = 2
+                c.set_line_dash([])
+                pts = [self.world_to_px(x, y) for (x, y) in e.waypoints]
+                c.begin_path()
+                c.move_to(*pts[0])
+                for p in pts[1:]:
+                    c.line_to(*p)
+                c.stroke()
             # -------------------------------------------------
             # LOOKAHEAD
             # -------------------------------------------------
