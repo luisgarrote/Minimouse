@@ -87,8 +87,7 @@ class Display:
 
         self._build_widgets()
         self._bind_widgets()
-        self._install_keyboard()
-        self._install_tick_loop()
+
 
     # ----------------------------
     # defaults / utilities
@@ -221,6 +220,8 @@ class Display:
          
 
         self.set_status("Ready — click Run, then use buttons (or WASD)")
+        self._install_keyboard()
+        self._install_tick_loop()
         return self
 
     def draw(self):
