@@ -216,9 +216,9 @@ class Display:
             widgets.HBox([self.V_slider, self.W_slider]),
             widgets.HBox([self.cmd_box, self.status]),
             widgets.HBox([self.laser_toggle, self.traj_toggle, self.look_toggle, self.viewmode, self.occlusion]),
-            self.hint,
+            self.hint, self.tick_btn
         )
-        display(self.tick_btn)
+         
 
         self.set_status("Ready — click Run, then use buttons (or WASD)")
         return self
