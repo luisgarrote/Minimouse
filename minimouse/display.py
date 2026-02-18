@@ -42,10 +42,10 @@ class Display:
         user_controller_fn=None,
         reset_hook_fn=None,
         on_status_fn=None,
-        px_per_cell=8,
+        px_per_cell=32,
         fps=20,
-        cells_w=9,
-        cells_h=9,
+        cells_w=3,
+        cells_h=3,
         n_rays=12,
         seed=0,
     ):
