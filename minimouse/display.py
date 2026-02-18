@@ -44,8 +44,8 @@ class Display:
         on_status_fn=None,
         px_per_cell=32,
         fps=20,
-        cells_w=5,
-        cells_h=5,
+        cells_w=4,
+        cells_h=4,
         n_rays=12,
         seed=0,
     ):
