@@ -17,6 +17,8 @@ from .env import MicromouseEnv
 from .canvas import CanvasRenderer
 from .maze import generate_perfect_maze
 from .controllers import make_bug2_controller, make_path_controller
+from zoneinfo import ZoneInfo
+from datetime import datetime
 
 class Display:
     """
@@ -47,7 +49,7 @@ class Display:
         cells_w=4,
         cells_h=4,
         n_rays=12,
-        seed=0,
+        seed=3,
     ):
         self.px_per_cell = int(px_per_cell)
         self.fps = float(fps)
@@ -69,7 +71,7 @@ class Display:
             "on_status": on_status_fn,                     # can be None
             # optional hooks if you want them
             "on_step_end": None,                           # fn(display)->None
-            "on_newmaze": None,                            # fn(display, seed, n_rays)->None
+            "on_newmaze": None,                            # fn(display, , n_rays)->None
         }
 
         # build env/canvas/renderer + widgets
@@ -151,11 +153,39 @@ class Display:
         self.rays_box = widgets.IntSlider(
             value=self.default_n_rays, min=3, max=41, step=1, description="Rays:"
         )
-        self.mode_dd = widgets.Dropdown(
-            options=[("Manual", "manual"), ("Auto (user_controller)", "auto"),("Auto (BUG2)", "autobug2"), ("Auto (A*)", "autoAstar"), ("Auto (RRT*)", "autoRRTstar")],
-            value="manual",
-            description="Mode:",
-        )
+
+
+        
+        #self.mode_dd = widgets.Dropdown(
+        #    options=[("Manual", "manual"), ("Auto (user_controller)", "auto"),("Auto (BUG2)", "autobug2"), ("Auto (A*)", "autoAstar"), ("Auto (RRT*)", "autoRRTstar")],
+        #    value="manual",
+        #    description="Mode:",
+        #)
+
+        lisbon = ZoneInfo("Europe/Lisbon")
+        unlock_time = datetime(2026, 2, 20, 18, 30, tzinfo=lisbon)
+        
+        if datetime.now(lisbon) >= unlock_time:
+            self.mode_dd = widgets.Dropdown(
+                options=[
+                    ("Manual", "manual"),
+                    ("Auto (user_controller)", "auto"),
+                    ("Auto (BUG2)", "autobug2"),
+                    ("Auto (A*)", "autoAstar"),
+                    ("Auto (RRT*)", "autoRRTstar"),
+                ],
+                value="manual",
+                description="Mode:",
+            )
+        else: 
+            self.mode_dd = widgets.Dropdown(
+                options=[
+                    ("Manual", "manual"),
+                    ("Auto (user_controller)", "auto"),
+                ],
+                value="manual",
+                description="Mode:",
+            )
 
         self.V_slider = widgets.FloatSlider(
             value=0.3, min=0.0, max=3.5, step=0.1, description="Forward V"
