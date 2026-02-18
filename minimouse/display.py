@@ -339,9 +339,9 @@ class Display:
 
         eps = 1e-9
         if abs(vl) > eps and abs(vr) > eps:
-            self.IterConter=self.IterCounter+1
+            self.IterCounter=self.IterCounter+1
 
-        self.set_time(self.IterConter)
+        self.set_time(self.IterCounter)
         cb = self.callbacks.get("on_step_end")
         if callable(cb):
             cb(self)
@@ -445,7 +445,7 @@ class Display:
         self.renderer = CanvasRenderer(self.canvas, self.env, px_per_cell=self.px_per_cell)
         self.draw()
         self.set_status(f"New maze seed={seed}")
-        self.IterConter=0
+        self.IterCounter=0
         self.set_time(0)
 
 
@@ -459,7 +459,7 @@ class Display:
         self.callbacks["reset_hook"]=None
         self.env.waypoints=None
         self.set_status(f"Mode: {self.control['mode']}")
-        self.IterConter=0
+        self.IterCounter=0
         self.set_time(0)
 
 
