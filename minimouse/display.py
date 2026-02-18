@@ -92,7 +92,7 @@ class Display:
     # ----------------------------
     # defaults / utilities
     # ----------------------------
-    def _default_make_env(self, seed=0, cells_w=9, cells_h=9, n_rays=12):
+    def _default_make_env(self, seed=3, cells_w=9, cells_h=9, n_rays=12):
         occ, start_cell, goal_cell = generate_perfect_maze(
             seed=seed, cells_w=cells_w, cells_h=cells_h
         )
