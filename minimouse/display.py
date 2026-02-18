@@ -163,7 +163,7 @@ class Display:
         #)
 
         lisbon = ZoneInfo("Europe/Lisbon")
-        unlock_time = datetime(2026, 2, 18, 17, 8, tzinfo=lisbon)
+        unlock_time = datetime(2026, 2, 20, 18, 30, tzinfo=lisbon)
         
         if datetime.now(lisbon) >= unlock_time:
             self.mode_dd = widgets.Dropdown(
