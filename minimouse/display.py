@@ -91,7 +91,7 @@ class Display:
         self._build_widgets()
         self._bind_widgets()
 
-        self.IterConter=0
+        self.IterCounter=0
 
     # ----------------------------
     # defaults / utilities
