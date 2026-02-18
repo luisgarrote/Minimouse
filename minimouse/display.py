@@ -63,12 +63,13 @@ class Display:
         self.window_keys = {}
         self.ui_queue = queue.Queue()
 
-        # callbacks you can override from outside any time
+        # callbacks
         self.callbacks = {
             "make_env": make_env_fn or self._default_make_env,
             "user_controller": user_controller_fn,         # can be None
             "reset_hook": reset_hook_fn,                   # can be None
             "on_status": on_status_fn,                     # can be None
+            "on_time": None,                     # can be None
             # optional hooks if you want them
             "on_step_end": None,                           # fn(display)->None
             "on_newmaze": None,                            # fn(display, , n_rays)->None
@@ -90,6 +91,7 @@ class Display:
         self._build_widgets()
         self._bind_widgets()
 
+        self.IterConter=0
 
     # ----------------------------
     # defaults / utilities
@@ -103,6 +105,12 @@ class Display:
     def set_status(self, msg: str):
         self.status.value = f"<b>Status:</b> {msg}"
         cb = self.callbacks.get("on_status")
+        if callable(cb):
+            cb(msg)
+
+    def set_time(self, msg: int):
+        self.solveTime.value = f"<b> Time: {msg*1.0/self.fps}s</b>"
+        cb = self.callbacks.get("on_time")
         if callable(cb):
             cb(msg)
 
@@ -203,6 +211,7 @@ class Display:
 
         # status
         self.status = widgets.HTML(value="<b>Status:</b> Ready")
+        self.solveTime = widgets.HTML(value="<b> Time: 0s</b>")
         self.hint = widgets.HTML(
             value="<i>Tip:</i> click the canvas once to focus for WASD (buttons always work)."
         )
@@ -243,7 +252,7 @@ class Display:
             widgets.HBox([self.btn_run, self.btn_stop, self.btn_reset, self.btn_newmaze]),
             widgets.HBox([self.mode_dd, self.seed_box, self.rays_box]),
             widgets.HBox([self.V_slider, self.W_slider]),
-            widgets.HBox([self.cmd_box, self.status]),
+            widgets.HBox([self.cmd_box, self.status, self.solveTime]),
             widgets.HBox([self.laser_toggle, self.traj_toggle, self.look_toggle, self.viewmode, self.occlusion]),
             self.hint, self.tick_btn
         )
@@ -326,6 +335,13 @@ class Display:
         self.env.step((vl, vr))
         self.draw()
 
+
+
+        eps = 1e-9
+        if abs(vl) > eps and abs(vr) > eps:
+            self.IterConter=self.IterCounter+1
+
+        self.set_time(self.IterConter)
         cb = self.callbacks.get("on_step_end")
         if callable(cb):
             cb(self)
@@ -429,6 +445,9 @@ class Display:
         self.renderer = CanvasRenderer(self.canvas, self.env, px_per_cell=self.px_per_cell)
         self.draw()
         self.set_status(f"New maze seed={seed}")
+        self.IterConter=0
+        self.set_time(0)
+
 
         cb = self.callbacks.get("on_newmaze")
         if callable(cb):
@@ -440,6 +459,9 @@ class Display:
         self.callbacks["reset_hook"]=None
         self.env.waypoints=None
         self.set_status(f"Mode: {self.control['mode']}")
+        self.IterConter=0
+        self.set_time(0)
+
 
     def _rays_changed(self, change):
         # update live env rays only (doesn't rebuild maze)
