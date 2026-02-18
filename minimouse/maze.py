@@ -10,7 +10,7 @@ import ipywidgets as widgets
 from IPython.display import display, Javascript
 
 
-def generate_perfect_maze(seed=0, cells_w=9, cells_h=9):
+def generate_perfect_maze(seed=3, cells_w=9, cells_h=9):
     rng = random.Random(seed)
 
     visited = [[False]*cells_w for _ in range(cells_h)]
