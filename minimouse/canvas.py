@@ -74,7 +74,7 @@ class CanvasRenderer:
                 cx, cy, 160,
                 [
                     (0.0, "rgba(0,0,0,0)"),
-                    (0.6, "rgba(0,0,0,0.55)"),
+                    (occlusion, "rgba(0,0,0,0.55)"),
                     (1.0, "rgba(0,0,0,0.85)")
                 ]
             )
