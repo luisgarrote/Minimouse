@@ -12,6 +12,21 @@ from IPython.display import display, Javascript
 
 
 class CanvasRenderer:
+    """Render a :class:`~minimouse.env.MicromouseEnv` onto an ``ipycanvas.Canvas``.
+
+    The renderer supports four visual themes (``mode`` 0–3) and can overlay
+    laser rays, the robot trajectory, and a lookahead prediction.
+
+    Parameters
+    ----------
+    canvas : ipycanvas.Canvas
+        Target canvas widget.
+    env : MicromouseEnv
+        Environment instance to visualise.
+    px_per_cell : int, optional
+        Pixel width/height allocated to each cell (default ``18``).
+    """
+
     def __init__(self, canvas, env, px_per_cell=18):
         self.canvas = canvas
         self.env = env
@@ -21,13 +36,43 @@ class CanvasRenderer:
 
 
     def world_to_px(self, x, y):
-        # origin at bottom-left in env; canvas origin is top-left
+        """Convert world coordinates to canvas pixel coordinates.
+
+        The environment origin is bottom-left; the canvas origin is top-left,
+        so the *y* axis is flipped.
+
+        Parameters
+        ----------
+        x, y : float
+            Position in world units.
+
+        Returns
+        -------
+        tuple of float
+            ``(px, py)`` pixel coordinates on the canvas.
+        """
         px = x * self.scale
         py = self.canvas.height - (y * self.scale)
         return px, py
 
     def draw(self, show_laser=True, show_trajectory=True, show_lookahead=True,
             mode=1, occlusion=0):
+        """Redraw the full scene on the canvas.
+
+        Parameters
+        ----------
+        show_laser : bool, optional
+            Draw laser rays (default ``True``).
+        show_trajectory : bool, optional
+            Draw the robot's past trajectory (default ``True``).
+        show_lookahead : bool, optional
+            Draw the predicted future path (default ``True``).
+        mode : int, optional
+            Visual theme: 0 = classic, 1 = dungeon, 2 = sci-fi, 3 = cyber
+            (default ``1``).
+        occlusion : float, optional
+            Fog-of-war intensity for dungeon/cyber modes, 0–1 (default ``0``).
+        """
 
         c = self.canvas
         e = self.env

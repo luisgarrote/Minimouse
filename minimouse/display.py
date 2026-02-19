@@ -21,18 +21,39 @@ from zoneinfo import ZoneInfo
 from datetime import datetime
 
 class Display:
-    """
-    Single, self-contained UI + sim loop wrapper.
+    """Self-contained interactive UI for running a micromouse simulation.
 
-    - You can swap behavior from outside by passing callbacks (or by assigning
-      display.callbacks["..."] = your_fn later).
+    Combines a :class:`~minimouse.env.MicromouseEnv`, a
+    :class:`~minimouse.canvas.CanvasRenderer`, and ``ipywidgets`` controls
+    into a single widget that works inside Google Colab / Jupyter notebooks.
 
-    Expected external symbols (already in your notebook):
-      - generate_perfect_maze
-      - MicromouseEnv
-      - CanvasRenderer
-      - user_controller(obs)   (only if you use auto mode)
-      - reset_bug2()           (optional; safe if missing)
+    The simulation can be driven manually (WASD buttons or keyboard) or
+    automatically via a user-supplied controller callback.
+
+    Parameters
+    ----------
+    make_env_fn : callable, optional
+        Factory ``(seed, cells_w, cells_h, n_rays) -> MicromouseEnv``.
+        Defaults to building a perfect maze with
+        :func:`~minimouse.maze.generate_perfect_maze`.
+    user_controller_fn : callable, optional
+        ``controller(obs) -> (vl, vr)`` for *Auto* mode.
+    reset_hook_fn : callable, optional
+        Called on environment reset to clear controller state.
+    on_status_fn : callable, optional
+        ``on_status(msg)`` called whenever the status bar updates.
+    px_per_cell : int, optional
+        Pixels per cell for canvas rendering (default ``64``).
+    fps : float, optional
+        Target frames per second for the tick loop (default ``20``).
+    cells_w : int, optional
+        Maze width in logical cells (default ``4``).
+    cells_h : int, optional
+        Maze height in logical cells (default ``4``).
+    n_rays : int, optional
+        Number of laser rays (default ``12``).
+    seed : int, optional
+        Initial random seed for maze generation (default ``3``).
     """
 
     # ----------------------------
@@ -103,6 +124,7 @@ class Display:
         return MicromouseEnv(occ, start_cell, goal_cell, cell_size=1.0, n_rays=n_rays)
 
     def set_status(self, msg: str):
+        """Update the status bar HTML widget and invoke the ``on_status`` callback."""
         self.status.value = f"<b>Status:</b> {msg}"
         cb = self.callbacks.get("on_status")
         if callable(cb):
@@ -115,6 +137,7 @@ class Display:
             cb(msg)
 
     def stop_motion(self):
+        """Set both wheel velocities to zero."""
         self.control["vl"] = 0.0
         self.control["vr"] = 0.0
 
@@ -244,6 +267,13 @@ class Display:
     # public API
     # ----------------------------
     def show(self):
+        """Display the canvas and all control widgets, then start the tick loop.
+
+        Returns
+        -------
+        Display
+            ``self``, for convenient chaining.
+        """
         display(self.canvas)
         self.draw()
 
@@ -264,6 +294,7 @@ class Display:
         return self
 
     def draw(self):
+        """Redraw the canvas using the current toggle / slider values."""
         self.renderer.draw(
             show_laser=self.laser_toggle.value,
             show_trajectory=self.traj_toggle.value,
@@ -273,6 +304,11 @@ class Display:
         )
 
     def step_once(self):
+        """Execute a single simulation step and refresh the display.
+
+        In *manual* mode the wheel velocities come from the UI controls.
+        In *auto* modes the registered controller callback is invoked.
+        """
         if not self.control["running"]:
             self.draw()
             return
