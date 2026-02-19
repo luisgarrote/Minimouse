@@ -74,8 +74,8 @@ class CanvasRenderer:
                 cx, cy, 160,
                 [
                     (0.0, "rgba(0,0,0,0)"),
-                    (occlusion, "rgba(0,0,0,0.55)"),
-                    (1.0, "rgba(0,0,0,0.85)")
+                    (occlusion, "rgba(0,0,0,0.45)"),
+                    (1.0, "rgba(0,0,0,0.65)")
                 ]
             )
             c.fill_style = g
