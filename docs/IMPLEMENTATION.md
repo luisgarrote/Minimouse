@@ -1,229 +1,143 @@
 # Implementation Guide
 
-This document provides guidance for implementing the MicromouseEnv class methods.
+This document describes the architecture and design decisions behind the
+Minimouse library.
 
-## Overview
+## Architecture Overview
 
-The current version (0.1.0) provides the interface definition only. All methods raise `NotImplementedError`. This guide helps implementers understand what each method should do.
+```
+minimouse/
+├── __init__.py        # Public API (MicromouseEnv, CanvasRenderer, Display)
+├── maze.py            # Perfect maze generation (DFS)
+├── env.py             # Core simulation environment
+├── canvas.py          # ipycanvas renderer (4 visual themes)
+├── display.py         # Interactive Colab/Jupyter UI
+├── controllers.py     # Bug2, waypoint follower, path-planning controller
+└── planners.py        # A*, RRT, RRT*, bundle-adjustment smoothing
+```
 
-## Implementation Checklist
+### Data Flow
 
-### Core Simulation Components
-
-#### 1. `__init__(self, occ, start_cell, goal_cell, cell_size=1.0, n_rays=12)`
-
-**Purpose:** Initialize the environment with maze configuration and parameters.
-
-**Implementation steps:**
-- [ ] Store occupancy grid, start/goal cells, cell_size, n_rays
-- [ ] Validate inputs (check bounds, positive values)
-- [ ] Initialize robot state (position, orientation, velocity)
-- [ ] Set up laser ray angles (evenly distributed around robot)
-- [ ] Initialize any tracking variables (steps, rewards, etc.)
-
-**Validation needed:**
-- start_cell and goal_cell must be within maze bounds
-- cell_size must be > 0
-- n_rays must be >= 1
-
----
-
-#### 2. `reset(self) -> np.ndarray`
-
-**Purpose:** Reset environment to initial state and return first observation.
-
-**Implementation steps:**
-- [ ] Reset robot to start_cell position
-- [ ] Reset robot orientation to initial direction
-- [ ] Reset any episode-specific state
-- [ ] Generate and return initial observation using `_get_obs()`
-
-**Returns:** Observation array (likely containing laser scan + robot state)
+1. **`maze.py`** generates an occupancy grid and start/goal cells.
+2. **`env.py`** wraps the grid in a simulation with differential-drive
+   kinematics, laser sensing, and collision handling.
+3. **`planners.py`** operates on the occupancy grid to produce waypoint paths.
+4. **`controllers.py`** consumes observations and (optionally) planned
+   waypoints to produce `(vl, vr)` wheel commands.
+5. **`canvas.py`** renders the environment state onto an `ipycanvas.Canvas`.
+6. **`display.py`** ties everything together with interactive widgets and a
+   tick-driven simulation loop.
 
 ---
 
-#### 3. `step(self, action) -> Tuple[np.ndarray, float, bool, dict]`
+## Module Details
 
-**Purpose:** Execute one timestep in the environment.
+### maze.py – Maze Generation
 
-**Implementation steps:**
-- [ ] Apply action to robot (update velocity/position/orientation)
-- [ ] Use `_handle_collision()` to prevent wall penetration
-- [ ] Check if goal reached (done = True)
-- [ ] Calculate reward (distance to goal, collision penalty, goal bonus)
-- [ ] Get new observation using `_get_obs()`
-- [ ] Build info dict with diagnostic data
+`generate_perfect_maze` uses a randomised DFS (recursive backtracker) to carve
+passages through an initially solid grid.
 
-**Returns:** 
-- observation: Current state
-- reward: Scalar reward
-- done: True if episode ended
-- info: Dict with metadata
+- **Grid convention** – the occupancy array has dimensions
+  `(2·cells_h + 1, 2·cells_w + 1)`.  Odd-indexed rows/columns hold cell
+  centres; even-indexed rows/columns are walls or passages.
+- **Goal selection** – a BFS from the start cell computes distances.  The goal
+  is picked from the 10 cells closest to the maze centre, biased toward higher
+  BFS distance.
 
----
+### env.py – MicromouseEnv
 
-### Sensing and Observation
+The core simulation loop runs at a fixed `dt = 0.05` time-step.
 
-#### 4. `_get_obs(self) -> np.ndarray`
+- **Kinematics** – standard differential-drive model:
+  `v = (vr + vl) / 2`, `ω = (vr − vl) / wheel_base`.
+- **Collision** – axis-aligned sliding: if the new position is in a wall, each
+  axis is tried independently before falling back to the original position.
+- **Laser** – `n_rays` rays are cast over a 180° frontal arc
+  (`−π/2 … +π/2` relative to heading) using a fixed step-size ray march
+  (`0.05 × cell_size`).  Max range is `8 × cell_size`.
+- **Observation** – a dictionary with keys `"pose"` (x, y, θ),
+  `"laser"` (n_rays floats), and `"goal_cell"` (cx, cy).
+- **Done condition** – the episode ends when the robot is within
+  `0.45 × cell_size` of the goal cell centre.
 
-**Purpose:** Construct observation from current state.
+### canvas.py – CanvasRenderer
 
-**Implementation steps:**
-- [ ] Get laser scan using `_laser_scan()`
-- [ ] Optionally add robot state (position, velocity, orientation)
-- [ ] Optionally add goal relative position
-- [ ] Concatenate into single numpy array
+Converts world coordinates to pixel coordinates (y-axis flipped) and draws
+the maze, robot, goal, laser rays, trajectory, planned waypoints, and
+lookahead prediction.
 
-**Typical observation components:**
-- Laser distances (n_rays values)
-- Robot position (x, y)
-- Robot orientation (theta)
-- Goal direction/distance
+Four rendering modes are supported:
 
----
+| Mode | Style | Notes |
+|------|-------|-------|
+| 0 | Classic | White floor, black walls |
+| 1 | Dungeon | Stone-textured walls, torch glow, fog of war |
+| 2 | Sci-fi | Light grey panels, panel seams |
+| 3 | Cyber | Dark background, cyan neon outlines, fog of war |
 
-#### 5. `_laser_scan(self) -> np.ndarray`
+### display.py – Display
 
-**Purpose:** Simulate laser range sensors.
+The `Display` class is designed for **Google Colab** and uses `ipywidgets`
+buttons, sliders, and dropdowns.
 
-**Implementation steps:**
-- [ ] Loop through each ray angle
-- [ ] Call `_ray_cast(ang)` for each angle
-- [ ] Return array of distances
+- A hidden tick button is clicked periodically by a JavaScript `setInterval`
+  loop (at the configured FPS) to drive `step_once()`.
+- Keyboard input (WASD) is captured via a JavaScript listener registered
+  through `google.colab.output`.
+- Controllers can be swapped at runtime by changing
+  `display.callbacks["user_controller"]`.
 
-**Returns:** Array of shape (n_rays,) with distances
+### controllers.py – Controllers
 
----
+Two controller factories are provided:
 
-#### 6. `_ray_cast(self, ang: float) -> float`
+1. **`make_bug2_controller`** – reactive Bug2 algorithm:
+   - *Go-to-goal* mode steers directly toward the goal.
+   - On frontal obstacle detection, switches to *wall-follow* (left-hand rule).
+   - Returns to go-to-goal when near the M-line and closer to the goal than
+     at the hit point.
 
-**Purpose:** Cast a single ray and measure distance to obstacle.
+2. **`make_path_controller`** – plan-and-follow:
+   - Plans a path via the selected planner (`astar`, `rrt`, or `rrtstar`).
+   - Smooths the path with `bundle_adjust_smooth`.
+   - Follows waypoints using `follow_waypoints` (proportional steering with
+     adaptive speed).
 
-**Implementation steps:**
-- [ ] Start from robot position
-- [ ] Convert angle to world coordinates (robot orientation + ray angle)
-- [ ] Step along ray direction
-- [ ] Use `_is_wall(x, y)` to check for obstacles
-- [ ] Return distance when wall hit or max range reached
+Both factories return `(controller_fn, reset_fn, ...)` matching the
+`controller(obs) → (vl, vr)` interface used by `Display`.
 
-**Returns:** Distance to nearest obstacle
+### planners.py – Planners & Smoothing
 
----
-
-### Collision and Wall Detection
-
-#### 7. `_is_wall(self, x: float, y: float) -> bool`
-
-**Purpose:** Check if world position is inside a wall.
-
-**Implementation steps:**
-- [ ] Convert world (x, y) to grid indices
-- [ ] Check if indices are out of bounds (return True)
-- [ ] Check occupancy grid at indices
-- [ ] Return True if occupied, False otherwise
-
-**Returns:** True if position is in wall
-
----
-
-#### 8. `_handle_collision(self, x: float, y: float, nx: float, ny: float) -> Tuple[float, float]`
-
-**Purpose:** Prevent robot from moving into walls.
-
-**Implementation steps:**
-- [ ] Check if new position (nx, ny) is valid using `_is_wall()`
-- [ ] If valid, return (nx, ny)
-- [ ] If invalid, return corrected position (could be (x, y) or slide along wall)
-- [ ] Optionally implement sliding collision response
-
-**Returns:** Valid position tuple
+- **A\*** – operates on the cell graph (4-connected).  Uses Manhattan distance
+  as the heuristic.
+- **RRT** – samples random collision-free points in world space, extends the
+  nearest node, and connects to the goal when close enough.
+- **RRT\*** – extends RRT with neighbour rewiring within a fixed radius to find
+  lower-cost paths.
+- **Bundle-adjustment smoothing** – iteratively pulls internal waypoints toward
+  the average of their neighbours, only accepting moves that keep the path
+  collision-free.
 
 ---
 
-### Utility Methods
+## Coordinate Conventions
 
-#### 9. `_cell_center_world(self, cx: int, cy: int) -> Tuple[float, float]`
-
-**Purpose:** Convert grid cell to world coordinates.
-
-**Implementation steps:**
-- [ ] Calculate x = (cx + 0.5) * cell_size
-- [ ] Calculate y = (cy + 0.5) * cell_size
-- [ ] Return (x, y)
-
-**Returns:** World coordinates of cell center
-
----
-
-#### 10. `predict_lookahead(self, steps: int = 18) -> Any`
-
-**Purpose:** Predict future states for planning.
-
-**Implementation steps:**
-- [ ] Save current state
-- [ ] Run simulation forward for N steps
-- [ ] Collect predicted states/observations
-- [ ] Restore original state
-- [ ] Return predictions
-
-**Possible implementations:**
-- Return list of future observations
-- Return predicted trajectory (positions)
-- Return value estimates
-
----
-
-## Suggested Implementation Order
-
-1. **Basic structure:**
-   - `__init__()` - Set up state variables
-   - `_cell_center_world()` - Simple coordinate conversion
-
-2. **Wall detection:**
-   - `_is_wall()` - Grid lookup
-
-3. **Sensing:**
-   - `_ray_cast()` - Single ray
-   - `_laser_scan()` - Multiple rays
-   - `_get_obs()` - Combine into observation
-
-4. **Core loop:**
-   - `reset()` - Initialize episode
-   - `_handle_collision()` - Movement validation
-   - `step()` - Main simulation step
-
-5. **Advanced:**
-   - `predict_lookahead()` - Planning support
-
-## Testing Recommendations
-
-1. **Unit tests for each method:**
-   - Test boundary conditions
-   - Test with simple known mazes
-   - Verify coordinates conversions
-
-2. **Integration tests:**
-   - Full episode simulation
-   - Verify observations have correct shape
-   - Check rewards are reasonable
-
-3. **Edge cases:**
-   - Empty maze (all free)
-   - Solid maze (all walls)
-   - Robot starting in wall
-   - Invalid actions
+| Concept | Convention |
+|---------|-----------|
+| Cell indices | `(cx, cy)` – column, row in the logical maze grid |
+| Occupancy grid | `occ[iy, ix]` – row-major NumPy array |
+| World frame | Origin at bottom-left; x→right, y→up |
+| Canvas frame | Origin at top-left; x→right, y→down (y is flipped) |
+| Robot heading | `theta` in radians, 0 = east, positive = counter-clockwise |
+| Laser angles | `[−π/2, +π/2]` relative to heading; positive = left |
 
 ## Dependencies
 
-The implementation will likely need:
-- `numpy` - Array operations, math
-- Optionally `gymnasium` - For standardized RL interface
-- Optionally `matplotlib` - For visualization
+| Package | Purpose |
+|---------|---------|
+| `numpy` | Array operations, math |
+| `ipycanvas` | Canvas rendering |
+| `ipywidgets` | Interactive UI controls |
 
-## Notes for Implementers
-
-- Consider making the class compatible with OpenAI Gym/Gymnasium interface
-- Add rendering capability for visualization
-- Consider continuous vs discrete action spaces
-- Think about reward shaping for effective learning
-- May want to add configuration options (max_steps, rewards, etc.)
+Optional (for Google Colab):
+- `google.colab.output` – keyboard callback registration

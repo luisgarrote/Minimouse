@@ -11,6 +11,33 @@ from IPython.display import display, Javascript
 
 
 def generate_perfect_maze(seed=3, cells_w=9, cells_h=9):
+    """Generate a random perfect maze using randomised depth-first search.
+
+    A *perfect* maze has exactly one path between any two cells (i.e. no
+    loops).  The occupancy grid uses the convention where cell passages and
+    walls alternate, resulting in a grid of size ``(2*cells_h+1, 2*cells_w+1)``.
+
+    The goal cell is chosen near the centre of the maze, biased toward cells
+    that are far from the start in terms of BFS distance.
+
+    Parameters
+    ----------
+    seed : int, optional
+        Random seed for reproducibility (default ``3``).
+    cells_w : int, optional
+        Number of logical columns in the maze (default ``9``).
+    cells_h : int, optional
+        Number of logical rows in the maze (default ``9``).
+
+    Returns
+    -------
+    occ : np.ndarray
+        ``uint8`` occupancy grid of shape ``(2*cells_h+1, 2*cells_w+1)``.
+    start_cell : tuple of int
+        ``(cx, cy)`` start cell (always ``(0, 0)``).
+    goal_cell : tuple of int
+        ``(cx, cy)`` chosen goal cell.
+    """
     rng = random.Random(seed)
 
     visited = [[False]*cells_w for _ in range(cells_h)]
