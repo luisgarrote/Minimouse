@@ -44,7 +44,7 @@ class Display:
         user_controller_fn=None,
         reset_hook_fn=None,
         on_status_fn=None,
-        px_per_cell=32,
+        px_per_cell=64,
         fps=20,
         cells_w=4,
         cells_h=4,
