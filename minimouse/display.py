@@ -464,6 +464,8 @@ class Display:
         self._safe_reset_hook()
         self.draw()
         self.set_status("Reset")
+        self.IterCounter=0
+        self.set_time(0)
 
     def _newmaze_clicked(self, _):
         self.control["running"] = False
